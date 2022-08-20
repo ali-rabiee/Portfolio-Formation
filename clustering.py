@@ -1,3 +1,5 @@
+
+from optparse import Values
 import pandas as pd
 import numpy as np
 import glob
@@ -7,7 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import datetime
 
-def calculate_correlation(base, numdays):
+def calculate_correlation(base, numdays, tickers):
     """ Define a def that prepare needed data for detecting the correlation between different stocks"""
     
     # Path of datasets in Google Drive
@@ -20,7 +22,14 @@ def calculate_correlation(base, numdays):
 
     # Prepare the data
     for filename in all_files:
-        
+        # remove path from the name
+        stock_name = filename.replace('hour.csv', '').replace('./datasets/', '')
+
+        if stock_name not in tickers:
+            continue
+
+        namesofMySeries.append(stock_name)
+
         # Read data
         df = pd.read_csv(filename, index_col=None, header=0) 
         df = df.loc[:,["Date", "Datetime", "Close"]]
@@ -44,11 +53,7 @@ def calculate_correlation(base, numdays):
         
         # Append time series 
         mySeries.append(df_new)
-        
-        # Save stock names
-        stock_name = filename.replace('hour.csv', '').replace('./datasets/', '')
-        namesofMySeries.append(stock_name)
-
+      
 
     # Check if our data is uniform in length.
     series_lengths = {len(series) for series in mySeries}
@@ -96,7 +101,10 @@ def calculate_correlation(base, numdays):
 
     clusters = pd.DataFrame(cluster_map,columns=["Series", "Cluster"]).sort_values(by="Cluster").set_index("Series")
 
-    return som_x, som_y, win_map, clusters
+    data = dict(zip(namesofMySeries, mySeries))
+    df_tickers = pd.DataFrame(data) 
+
+    return som_x, som_y, win_map, df_tickers, clusters
 
 def visualize_clusters(som_x, som_y, win_map):
     

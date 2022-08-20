@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt # Important package for visualization - we use t
 import matplotlib.dates as mdates # Formatting dates
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten, Reshape, Lambda
@@ -23,19 +23,23 @@ from feature_eng import get_indicators
 def evaluate_model(y_pred, y_gt):
     # Mean Square Error (MSE)
     MSE = mean_squared_error(y_gt, y_pred)
-    print(f'Mean Square Error (MSE): {np.round(MSE, 2)}')
+    print(f'Mean Square Error (MSE): {MSE}')
+
+    # Root Mean Square Error (RMSE)
+    RMSE = np.sqrt(MSE)
+    print(f'Root Mean Square Error (MSE): {RMSE}')
 
     # Mean Absolute Error (MAE)
     MAE = mean_absolute_error(y_gt, y_pred)
-    print(f'Median Absolute Error (MAE): {np.round(MAE, 2)}')
+    print(f'Median Absolute Error (MAE): {MAE}')
 
     # Mean Absolute Percentage Error (MAPE)
     MAPE = np.mean((np.abs(np.subtract(y_gt, y_pred)/ y_gt))) * 100
-    print(f'Mean Absolute Percentage Error (MAPE): {np.round(MAPE, 2)} %')
+    print(f'Mean Absolute Percentage Error (MAPE): {MAPE} %')
 
     # Median Absolute Percentage Error (MDAPE)
     MDAPE = np.median((np.abs(np.subtract(y_gt, y_pred)/ y_gt)) ) * 100
-    print(f'Median Absolute Percentage Error (MDAPE): {np.round(MDAPE, 2)} %') 
+    print(f'Median Absolute Percentage Error (MDAPE): {MDAPE} %') 
 
 
 def prepare_data(ticker, df, predicted_col, start, end, look_back=7, use_indicators=False): 

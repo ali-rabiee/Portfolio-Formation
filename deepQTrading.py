@@ -96,7 +96,7 @@ class DeepQTrading:
         # Set an index to Datetime on the pandas loaded dataset. Registers will be indexes through these values
         self.sp = self.sp.set_index('Datetime')
         # Drop Time and Date from the Dataset
-        self.sp = self.sp.drop(['Time','Date'], axis=1)
+        self.sp = self.sp.drop(['Time', 'Date'], axis=1)
         # Just the index considering date and time will be important, because date and time will be used to define the train, 
         # validation and test for each walk
         self.sp = self.sp.index

@@ -1,53 +1,40 @@
 
-# Google Drive Connection
 
 import pandas as pd
 import numpy as np
 # Trading Function
-def trade(df, actions, initial_capital, long=True):
+def trade(df, date, initial_capital, long=True):
 
-  capital = initial_capital
-  stock = initial_capital / df["Open"][0]
-  gain = 0
-  local_df = pd.DataFrame(columns = ["Date", "Open", "Close"])
+    capital = initial_capital
+    stock = initial_capital / df["Open"][0]
+    gain = 0
 
-  for i in range(len(actions)):
-      local_df = local_df.append(df.loc[df['Date'] == actions["Date"][i]])
-  return local_df
-  local_df.reset_index(drop=True, inplace=True)
-  date = actions.loc[:, 'Date'].tolist()
-  open = local_df.loc[:, 'Open'].tolist()
-  close = local_df.loc[:, 'Close'].tolist()
-  actions = actions.loc[:, 'ensemble'].tolist()
-  capital_list = []
-  gain_list = []
+    local_df = df[df['Date'] == date]
+    local_df.reset_index(drop=True, inplace=True)
 
-  for i in range(len(actions)):
+    close = local_df['Close'][0]
+    open = local_df['Open'][0]
+
     if long:
-      if actions[i] == 1: # Action is Long
-        stock_temp = capital / open[i]
-        capital = round((stock_temp * close[i]), 2)
+        stock_temp = capital / open
+        capital = round((stock_temp * close), 2)
+
     else:
-      if actions[i] == 2: # Action is Short
-        capital_temp = stock * open[i]
-        stock = capital_temp / close[i]
-        capital = round((stock * close[i]), 2)
-    
-    capital_list.append(capital)
-    gain = capital - initial_capital
-    gain_list.append(gain)
+        capital_temp = stock * open
+        stock = capital_temp / close
+        capital = round((stock * close), 2)
 
-  local_df = local_df.assign(Capital=pd.Series(capital_list))
-  local_df = local_df.assign(Gain=pd.Series(gain_list))
-
-  return local_df
+    return capital
 
 def metrics(df, initial_capital):
     
     df_local = df.copy() 
     
+    # Return
+    df_local = df.assign(Return=pd.Series(df.Capital - initial_capital))
+
     # Calculate rate of return
-    df_local = df.assign(ROR=pd.Series(df.Capital - initial_capital)/ initial_capital * 100)
+    df_local = df_local.assign(ROR=pd.Series(df.Capital - initial_capital)/ initial_capital * 100)
 
     # Calculate Drawdown
     max_ror = max(df_local.ROR)
@@ -64,7 +51,7 @@ def metrics(df, initial_capital):
 
     # Calculate Sortino Ratio and Sharpe Ratio
     mean = df_local.ROR[-1:].values[0]
-    std_neg = df_local[df_local["ROR"]<0].ROR.std()
+    std_neg = df_local[df_local["ROR"] < 0].ROR.std()
     std = df_local.ROR.std()
     sortino = mean / std_neg
     sharpe = mean / std
@@ -75,4 +62,35 @@ def metrics(df, initial_capital):
     
     return df_local
 
+def buy_and_hold(portfo, start, end, initial_capital):
+    df = pd.read_csv(f'./datasets/AAPLday.csv')
+    df = df[(df['Date'] >= start) & (df['Date'] <= end)]
+    Dates = df['Date'].to_list()
+    stocks = []
+    prices = []
 
+    for item in portfo:
+        ticker = item[0]
+        df = pd.read_csv(f"./datasets/{ticker}day.csv")
+        df = df[(df['Date'] >= start) & (df['Date'] <= end)]
+        close_price = df['Close'].to_list()
+        prices.append(close_price)
+
+        weight = item[1]
+        capital = weight * initial_capital
+        stock_amount = capital / close_price[0]
+        stocks.append(stock_amount)
+
+    returns = {}
+
+    for i, date in enumerate(Dates):
+        if date == start:
+            returns[date] = initial_capital
+        
+        ret = 0
+        for j, stock_amount in enumerate(stocks):
+            close_price = prices[j][i]
+            ret += close_price * stock_amount
+
+        returns[date] = ret
+    return returns
